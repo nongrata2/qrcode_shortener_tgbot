@@ -9,7 +9,6 @@ import (
 	"net/http"
 	"fmt"
 	"sync"
-	"github.com/joho/godotenv"
 	"os"
 	"image/png"
 )
@@ -67,13 +66,12 @@ var (
 
 func main() {
 
-	err := godotenv.Load()
-	if err != nil {
-		log.Fatal("Error loading .env file")
-	}
+	bitlyToken := os.Getenv("BITLY_TOKEN")
+	telegramBotToken := os.Getenv("TELEGRAM_BOT_TOKEN")
 
-	bitlyToken := os.Getenv(BITLY_TOKEN)
-	telegramBotToken := os.Getenv(TELEGRAM_BOT_TOKEN)
+	if bitlyToken == "" || telegramToken == "" {
+		log.Fatal("Missing environment variables")
+	}
 
 	bot, err := tgbotapi.NewBotAPI(telegramBotToken)
 	if err != nil {
