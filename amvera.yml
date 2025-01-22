@@ -4,7 +4,9 @@ meta:
     name: go
     version: 1.22
 build:
-  image: golang:1.22
+  image: golang:1.22  
+  commands:
+    - go mod download
 run:
   image: golang:1.22
   persistenceMount: /data
