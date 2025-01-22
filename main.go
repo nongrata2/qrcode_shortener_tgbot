@@ -72,8 +72,8 @@ func main() {
 		log.Fatal("Error loading .env file")
 	}
 
-	bitlyToken := os.Getenv("BITLY_TOKEN")
-	telegramBotToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+	bitlyToken := os.Getenv(BITLY_TOKEN)
+	telegramBotToken := os.Getenv(TELEGRAM_BOT_TOKEN)
 
 	bot, err := tgbotapi.NewBotAPI(telegramBotToken)
 	if err != nil {
