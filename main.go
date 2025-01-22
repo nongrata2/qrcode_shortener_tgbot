@@ -69,7 +69,7 @@ func main() {
 	bitlyToken := os.Getenv("BITLY_TOKEN")
 	telegramBotToken := os.Getenv("TELEGRAM_BOT_TOKEN")
 
-	if bitlyToken == "" || telegramToken == "" {
+	if bitlyToken == "" || telegramBotToken == "" {
 		log.Fatal("Missing environment variables")
 	}
 
