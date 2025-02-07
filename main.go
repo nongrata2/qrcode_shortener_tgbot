@@ -46,7 +46,7 @@ func ShortenURL(longURL string, accessToken string) (string, error) {
 	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
 		body := new(bytes.Buffer)
 		body.ReadFrom(resp.Body)
-		return "", fmt.Errorf("failed to shorten URL, status code: %d, response: %s", resp.StatusCode, body.String())
+		return "", fmt.Errorf("Failed to shorten URL, status code: %d, response: %s", resp.StatusCode, body.String())
 	}
 
 	var bitlyResponse BitlyResponse
@@ -112,7 +112,7 @@ func main() {
 				awaitingLock.Lock()
 				awaitingURL[chatID] = "short"
 				awaitingLock.Unlock()
-				msg := tgbotapi.NewMessage(chatID, "Please send the URL to shorten.")
+				msg := tgbotapi.NewMessage(chatID, "Please send the URL to shorten in https://.. format")
 				bot.Send(msg)
 			case "qrcode":
 				awaitingLock.Lock()
@@ -132,7 +132,7 @@ func main() {
 					shortURL, err := ShortenURL(text, bitlyToken)
 					if err != nil{
 						log.Println("Error generating short URL:", err)
-						msg := tgbotapi.NewMessage(chatID, "Failed to generate short URL.")
+						msg := tgbotapi.NewMessage(chatID, "Failed to generate short URL. Please, try again. Make sure it is in https://.. format")
 						bot.Send(msg)
 						continue
 					}
@@ -142,16 +142,16 @@ func main() {
 					var buf bytes.Buffer
 					qr, err := qrcode.New(text, qrcode.Medium)
 					if err != nil {
-						log.Println("Error generating QR code:", err)
-						msg := tgbotapi.NewMessage(chatID, "Failed to generate QR code.")
+						log.Println("Error generating QR-code:", err)
+						msg := tgbotapi.NewMessage(chatID, "Failed to generate QR-code. Please, try again.")
 						bot.Send(msg)
 						continue
 					}
 
 					err = png.Encode(&buf, qr.Image(256))
 					if err != nil {
-						log.Println("Error encoding QR code to PNG:", err)
-						msg := tgbotapi.NewMessage(chatID, "Failed to encode QR code.")
+						log.Println("Error encoding QR-code to PNG:", err)
+						msg := tgbotapi.NewMessage(chatID, "Failed to encode QR-code. Please, try again.")
 						bot.Send(msg)
 						continue
 					}
@@ -159,7 +159,7 @@ func main() {
 					photo := tgbotapi.NewPhoto(chatID, tgbotapi.FileBytes{Name: "qrcode.png", Bytes: buf.Bytes()})
 					if _, err = bot.Send(photo); err != nil {
 						log.Println("Error sending photo:", err)
-						msg := tgbotapi.NewMessage(chatID, "Failed to send QR code.")
+						msg := tgbotapi.NewMessage(chatID, "Failed to send QR-code. Please, try again.")
 						bot.Send(msg)
 					}
 				}
