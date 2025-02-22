@@ -1,17 +1,23 @@
-FROM golang:1.22.6 AS builder
+FROM golang:1.23.6 AS builder
     
 WORKDIR /app
 
 COPY main.go go.mod go.sum ./
 
-RUN CGO_ENABLED=0 go build -a -installsuffix cgo -o server
+RUN go mod tidy
+
+COPY . .
+
+COPY .env .env
+
+RUN cat .env
+
+RUN CGO_ENABLED=0 go build -a -installsuffix cgo -o server .
 
 FROM alpine:latest
 
 COPY --from=builder /app/server ./
 
-COPY static/ ./static/
+EXPOSE 8080
 
-EXPOSE 80
-
-CMD ["./server", "--port", "80"]
+CMD ["./server", "--port", "8080"]
