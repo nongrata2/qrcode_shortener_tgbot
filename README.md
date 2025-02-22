@@ -24,21 +24,17 @@ git clone https://github.com/nongrata2/qrcode_shortener_tgbot
 cd qrcode_shortener_tgbot
 ```
 
-2. Install dependencies:
-```
-go get -u github.com/go-telegram-bot-api/telegram-bot-api/v5
-go get -u github.com/skip2/go-qrcode
-go get -u github.com/joho/godotenv
-```
-3. Create a .env file:
+2. Create a .env file:
 
 Create a file named .env in the root directory of the project.
 Add your Bitly access token and Telegram bot token to the .env file:
+
 ```
 BITLY_TOKEN=your_bitly_token
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
 ```
-4. Run the bot:
+
+3. Run the bot with docker compose:
 ```
-go run main.go
+docker compose up --build
 ```
