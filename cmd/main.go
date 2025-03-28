@@ -3,62 +3,16 @@ package main
 import (
 	"log/slog"
 	"bytes"
-	"encoding/json"
 	"flag"
-	"fmt"
 	"image/png"
-	"net/http"
 	"sync"
 
 	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
 	"github.com/skip2/go-qrcode"
 
 	"tg_bot/internal/config"
+	"tg_bot/internal/externalapi"
 )
-
-type BitlyResponse struct {
-	Link string `json:"link"`
-}
-
-func ShortenURL(longURL string, accessToken string) (string, error) {
-	apiURL := "https://api-ssl.bitly.com/v4/shorten"
-
-	requestBody, err := json.Marshal(map[string]string{
-		"long_url": longURL,
-	})
-	if err != nil {
-		return "", err
-	}
-
-	req, err := http.NewRequest("POST", apiURL, bytes.NewBuffer(requestBody))
-	if err != nil {
-		return "", err
-	}
-
-	req.Header.Set("Content-Type", "application/json")
-	req.Header.Set("Authorization", "Bearer "+accessToken)
-
-	client := &http.Client{}
-	resp, err := client.Do(req)
-	if err != nil {
-		return "", err
-	}
-	defer resp.Body.Close()
-
-	if resp.StatusCode != http.StatusOK && resp.StatusCode != http.StatusCreated {
-		body := new(bytes.Buffer)
-		body.ReadFrom(resp.Body)
-		return "", fmt.Errorf("Failed to shorten URL, status code: %d, response: %s", resp.StatusCode, body.String())
-	}
-
-	var bitlyResponse BitlyResponse
-	err = json.NewDecoder(resp.Body).Decode(&bitlyResponse)
-	if err != nil {
-		return "", err
-	}
-
-	return bitlyResponse.Link, nil
-}
 
 var (
 	links        = make(map[string]string)
@@ -76,7 +30,7 @@ func main() {
 
 	log := mustMakeLogger(cfg.LogLevel)
 
-	log.Info("starting server")
+	log.Info("starting bot")
 
 	log.Debug("debug messages are enabled")
 
@@ -126,7 +80,7 @@ func main() {
 			if exists {
 				switch command {
 				case "short":
-					shortURL, err := ShortenURL(text, cfg.BitlyToken)
+					shortURL, err := externalapi.ShortenURL(text, cfg.BitlyToken)
 					if err != nil {
 						log.Error("Error generating short URL:", "error", err)
 						msg := tgbotapi.NewMessage(chatID, "Failed to generate short URL. Please, try again. Make sure it is in https://.. format")
