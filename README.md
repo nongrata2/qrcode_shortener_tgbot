@@ -32,6 +32,7 @@ Add your Bitly access token and Telegram bot token to the .env file:
 ```
 BITLY_TOKEN=your_bitly_token
 TELEGRAM_BOT_TOKEN=your_telegram_bot_token
+LOG_LEVEL=your_log_level(e.g. DEBUG)
 ```
 
 3. Run the bot with docker compose:

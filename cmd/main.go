@@ -1,16 +1,19 @@
 package main
 
 import (
-	"log"
-	"github.com/skip2/go-qrcode"
-	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"log/slog"
 	"bytes"
 	"encoding/json"
-	"net/http"
+	"flag"
 	"fmt"
-	"sync"
-	"os"
 	"image/png"
+	"net/http"
+	"sync"
+
+	tgbotapi "github.com/go-telegram-bot-api/telegram-bot-api/v5"
+	"github.com/skip2/go-qrcode"
+
+	"tg_bot/internal/config"
 )
 
 type BitlyResponse struct {
@@ -58,28 +61,28 @@ func ShortenURL(longURL string, accessToken string) (string, error) {
 }
 
 var (
-	links = make(map[string]string)
-	linksLock sync.Mutex
-	awaitingURL = make(map[int64]string)
+	links        = make(map[string]string)
+	linksLock    sync.Mutex
+	awaitingURL  = make(map[int64]string)
 	awaitingLock sync.Mutex
 )
 
 func main() {
+	var configPath string
+	flag.StringVar(&configPath, "config", ".env", "configuration file")
+	flag.Parse()
 
-	bitlyToken := os.Getenv("BITLY_TOKEN")
-	telegramBotToken := os.Getenv("TELEGRAM_BOT_TOKEN")
+	cfg := config.MustLoadCfg(configPath)
 
-	if bitlyToken == ""{
-		log.Fatal("Missing bitly token")
-	}
+	log := mustMakeLogger(cfg.LogLevel)
 
-	if telegramBotToken == ""{
-		log.Fatal("Missing telegram bot token")
-	}
+	log.Info("starting server")
 
-	bot, err := tgbotapi.NewBotAPI(telegramBotToken)
+	log.Debug("debug messages are enabled")
+
+	bot, err := tgbotapi.NewBotAPI(cfg.TelegramBotToken)
 	if err != nil {
-		log.Panic(err)
+		log.Error("error starting bot", "error", err)
 	}
 
 	bot.Debug = true
@@ -123,9 +126,9 @@ func main() {
 			if exists {
 				switch command {
 				case "short":
-					shortURL, err := ShortenURL(text, bitlyToken)
-					if err != nil{
-						log.Println("Error generating short URL:", err)
+					shortURL, err := ShortenURL(text, cfg.BitlyToken)
+					if err != nil {
+						log.Error("Error generating short URL:", "error", err)
 						msg := tgbotapi.NewMessage(chatID, "Failed to generate short URL. Please, try again. Make sure it is in https://.. format")
 						bot.Send(msg)
 						continue
@@ -136,7 +139,7 @@ func main() {
 					var buf bytes.Buffer
 					qr, err := qrcode.New(text, qrcode.Medium)
 					if err != nil {
-						log.Println("Error generating QR-code:", err)
+						log.Error("Error generating QR-code:", "error", err)
 						msg := tgbotapi.NewMessage(chatID, "Failed to generate QR-code. Please, try again.")
 						bot.Send(msg)
 						continue
@@ -144,7 +147,7 @@ func main() {
 
 					err = png.Encode(&buf, qr.Image(256))
 					if err != nil {
-						log.Println("Error encoding QR-code to PNG:", err)
+						log.Error("Error encoding QR-code to PNG", "error", err)
 						msg := tgbotapi.NewMessage(chatID, "Failed to encode QR-code. Please, try again.")
 						bot.Send(msg)
 						continue
@@ -152,7 +155,7 @@ func main() {
 
 					photo := tgbotapi.NewPhoto(chatID, tgbotapi.FileBytes{Name: "qrcode.png", Bytes: buf.Bytes()})
 					if _, err = bot.Send(photo); err != nil {
-						log.Println("Error sending photo:", err)
+						log.Error("Error sending photo:", "error", err)
 						msg := tgbotapi.NewMessage(chatID, "Failed to send QR-code. Please, try again.")
 						bot.Send(msg)
 					}
@@ -163,4 +166,8 @@ func main() {
 			}
 		}
 	}
+}
+
+func mustMakeLogger(logLevel string) *slog.Logger {
+	return slog.Default()
 }

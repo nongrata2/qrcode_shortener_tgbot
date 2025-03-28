@@ -1,23 +1,17 @@
-FROM golang:1.23.6 AS builder
-    
-WORKDIR /app
+FROM golang:1.23 AS build
 
-COPY main.go go.mod go.sum ./
+WORKDIR /src
 
-RUN go mod tidy
+COPY go.mod go.sum ./
+RUN go mod download
 
-COPY . .
+COPY cmd ./cmd
+COPY internal ./internal
 
-COPY .env .env
-
-RUN cat .env
-
-RUN CGO_ENABLED=0 go build -a -installsuffix cgo -o server .
+RUN CGO_ENABLED=0 go build -o /tg_bot ./cmd/main.go
 
 FROM alpine:latest
 
-COPY --from=builder /app/server ./
+COPY --from=build /tg_bot /tg_bot
 
-EXPOSE 8080
-
-CMD ["./server", "--port", "8080"]
+ENTRYPOINT ["/tg_bot"]
